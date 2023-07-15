@@ -1,26 +1,34 @@
+
 const User = require("../models/user");
+//TA 
+module.exports.profile = function(req, res){
+  return res.render('user_profile', {
+      title: 'User Profile'
+  })
+}
 
-module.exports.profile = async function(req, res) {
-  try {
-    if (req.cookies.user_id) {
-      const user = await User.findById(req.cookies.user_id);
+//async
+// module.exports.profile = async function(req, res) {
+//   try {
+//     if (req.cookies.user_id) {
+//       const user = await User.findById(req.cookies.user_id);
       
-      if (user) {
-        return res.render("user_profile", {
-          title: "user profile",
-          user: user
-        });
-      }
-    }
+//       if (user) {
+//         return res.render("./user_profile", {
+//           title: "user profile",
+//           user: user
+//         });
+//       }
+//     }
     
-    return res.redirect('user/sign-in');
-  } catch (err) {
-    // Handle any errors that occurred during the async operations
-    console.error(err);
-    return res.redirect('user/sign-in');
-  }
-};
-
+//     return res.redirect('user/sign-in');
+//   } catch (err) {
+//     // Handle any errors that occurred during the async operations
+//     console.error(err);
+//     return res.redirect('user/sign-in');
+//   }
+// };
+//non async
 // module.exports.profile = function(req,res){
 //   if(req.cookies.user_id){
 // User.findById(req.cookies.user_id,function(err,user){
@@ -38,20 +46,44 @@ module.exports.profile = async function(req, res) {
 //   }
 // }
   
+
 //render sign-up page
 
-module.exports.signup = function(req,res){
-    return res.render("user_sign_up",{
-        title:"codeinal | Sign-up"
-    })
-}
+module.exports.signup = async function (req, res) {
+  if (req.isAuthenticated()) {
+    return res.redirect("/user/profile");
+  }
+
+  try {
+    await res.render("user_sign_up", {
+      title: "codeinal | Sign-up",
+    });
+  } catch (error) {
+    // Handle the error
+    console.error(error);
+    // Send an error response
+    res.status(500).send("Internal Server Error");
+  }
+};
+
 
 //render sign-in page
-module.exports.signin = function(req,res){
-    return res.render("user_sign_in",{
-        title:"codeinal | Sign-in"
-    })
-}
+module.exports.signin = async function (req, res) {
+  if (req.isAuthenticated()) {
+    return res.redirect("/user/profile");
+  }
+
+  try {
+    await res.render("user_sign_in", {
+      title: "codeinal | Sign-in",
+    });
+  } catch (error) {
+    // Handle the error
+    console.error(error);
+    // Send an error response
+    res.status(500).send("Internal Server Error");
+  }
+};
 
 //get the sign up data
 module.exports.create = async function (req, res) {
@@ -118,28 +150,46 @@ module.exports.create = async function (req, res) {
 
 
 // });
-module.exports.createSession = async function(req, res) {
-  try {
-    // Steps to authenticate
-    // Find the user
-    let user = await User.findOne({ email: req.body.email });
+//manual auth
+// module.exports.createSession = async function(req, res) {
+//   try {
+//     // Steps to authenticate
+//     // Find the user
+//     let user = await User.findOne({ email: req.body.email });
     
-    // Handle user found
-    if (user) {
-      // Handle mismatching password
-      if (user.password !== req.body.password) {
-        return res.redirect("back");
-      }
+//     // Handle user found
+//     if (user) {
+//       // Handle mismatching password
+//       if (user.password !== req.body.password) {
+//         return res.redirect("back");
+//       }
       
-      // Handle the session creation
-      res.cookie('user_id', user.id);
-      return res.redirect('/user/profile');
-    } else {
-      // Handle user not found
-      return res.redirect("back");
+//       // Handle the session creation
+//       res.cookie('user_id', user.id);
+//       return res.redirect('/user/profile');
+//     } else {
+//       // Handle user not found
+//       return res.redirect("back");
+//     }
+//   } catch (err) {
+//     console.log("Error in finding user in signing up", err);
+//     return;
+//   }
+// };
+
+
+//sign in and create a session for the user
+
+module.exports.createSession = function(req,res){
+  return res.redirect("/");
+}
+module.exports.destroySession = function(req, res, next) {
+  req.logout(function(err) {
+    if (err) {
+      // Handle any errors that occurred during logout
+      return next(err);
     }
-  } catch (err) {
-    console.log("Error in finding user in signing up", err);
-    return;
-  }
-};
+    return res.redirect("/");
+  });
+}
+
